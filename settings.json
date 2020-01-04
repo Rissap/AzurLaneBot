@@ -1,13 +1,5 @@
 {
-	"common": {
-		"battle": "battle.png"
-	},
-
-	"7.1": {
-		"start": "img/chapter7.1.png",
-		"abstract_map": [
-			[],
-			[]
-		]
+	"4-2": {
+		
 	}
 }

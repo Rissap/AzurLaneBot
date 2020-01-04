@@ -10,6 +10,7 @@ from abc import abstractmethod
 
 
 FREEZE = time.sleep
+
 MOVE_X = 140
 MOVE_Y = 100
 
