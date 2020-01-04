@@ -26,5 +26,3 @@ Preparation:
 5. Select your emulator and make full screen. After a few seconds after running main.exe you will see how bot select stage and farm it.
 
 6. If nothing: check console that you run before and see what happends.
-
-7. For any questions: rinej.sapset@gmail.com
