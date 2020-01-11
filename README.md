@@ -1,4 +1,3 @@
-"# AzurLaneBot" 
 Script that helps you to farm ships/exp from non-event chapters in Azur Lane.
 
 Tech tips:

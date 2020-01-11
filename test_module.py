@@ -1,4 +1,4 @@
-    import cv2
+import cv2
 import time
 import json
 import win32api
@@ -14,7 +14,7 @@ FREEZE = time.sleep
 MOVE_X = 140
 MOVE_Y = 100
 
-ACCURACY = 0.9
+ACCURACY = 0.8
 CLICK_TIME = 5
 
 #first drag to find base position
@@ -61,7 +61,7 @@ class Chapter71():
     def __init__(self):
         self.name = "7.1"
         self.fleet_pos = (0, 2)
-        self.abstract_map = [[0,3,3,6,3,0,5,5],[10,3,5,5,3,3,5,5],[10,0,5,5,0,3,3,9]]
+        #self.abstract_map = [[0,3,3,6,3,0,5,5],[10,3,5,5,3,3,5,5],[10,0,5,5,0,3,3,9]]
         
         self.stage_road = [(0,1),(1,1),(1,0),(2,0),(3,0),(4,0),(4,1),(5,1),(5,2),(6,2),(7,2)]
         self.box = None
@@ -188,186 +188,101 @@ class Chapter71():
             time.sleep(FREEZE_CLICK)
 
 
-class Chapter81():
-    def __init__(self):
-        self.name = "8.1"
-        self.fleet_pos = (0, 3)
-        self.control_point =  (5, 2)
-        self.loop_index = 0
-        self.battle_amount = 0
-        self.dragged = 1 #part of map where camera is located
+class Chapter():
+    def __init__(self, _name):
+        self.name = _name
 
-        self.abstract_map = [[0,0,5,5,1,0,1,1,5],[0,0,5,5,1,0,1,0,1],[0,1,1,0,1,5,1,1,1]]
-        self.stage_road = [(0,2),(1,2),(2,2),(3,2),(4,2),(4,1),(4,0),(5,0),(6,0),(6,1),(6,2),(7,2),(8,2),(7,0)]
         self.box = None
+        self.boss = False
+        self.dragged = False 
+        
+        self.fleet_pos = []
+        self.stage_road = []
+        self.abstract_map = []
+        self.control_point = []
 
-
-    def compare_to_screen(self, _img, _folder=False):
-        '''if it's special img, find it in folder callde by a chapter name
-        or it's common img'''
-        if _folder:
-            self.box = pag.locateOnScreen("img/{}/{}.png".format(self.name, _img), confidence=ACCURACY)
-        else:
-            self.box = pag.locateOnScreen("img/{}.png".format(_img), confidence=ACCURACY)
-
-    def set_first_mouse_position(self):
-        """set mouse and fleet to the first cell"""
-        screen_size = pag.size()
-        pag.moveTo(screen_size[0]/2, screen_size[1]/2)
-        self.drag_map(DRAG_MAP_X, DRAG_MAP_Y)
-
-        self.find_and_click("angle")
-        pag.move(FIRST_CELL_X, FIRST_CELL_Y)
-        pag.click()
-        FREEZE(CLICK_TIME)
-
+    def compare_to_screen(self, _img, _folder=""):
+        self.box = pag.locateOnScreen("img/{}{}.png".format(_folder, _img), confidence=ACCURACY)
+    
     def find_and_click(self, _img):
-        #check if template from unique folder or is common
         if _img in SPETIAL_TEMPLATE:
-            self.compare_to_screen(_img, True)
+            self.compare_to_screen(_img, self.name+"/")
         else:
             self.compare_to_screen(_img)
 
         if self.box!=None:
-            if _img=="clear":
-                pag.moveTo(self.box)
-                pag.move(None, 145)
-                pag.click()
-            else:
-                pag.click(self.box)
+            pag.click(self.box)
+            FREEZE(CLICK_TIME)
 
-    def check(self, _img):
-        self.compare_to_screen(_img)
-        if self.box!=None:
-            pag.moveTo(300, 300)
-            pag.dragTo(800, 400, 2, button='left')
-            return True        
-
-    def drag_map(self, x, y):
-        pag.drag(x, y, 1, button='left')
-
-    def drag_this_map(self, position):
-        """common drag map to move at the big fields"""
-        #forward && backward
-        if position == "forward":
-            pos = pag.position()
-            pag.drag(-MOVE_MAP_X, 0, 1, button="left")
-            pag.move(DRAG_ERROR_X, None)
-        else:
-            pos = pag.position()
-            pag.drag(MOVE_MAP_X, 0, 1, button="left")
-            pag.move(-DRAG_ERROR_X, None)
-
-    def in_battle(self):
-        self.compare_to_screen("in_battle")
-        if self.box!=None:
             return True
         return False
 
-    def move_next(self):
-        #find an control point
-        box = pag.locateOnScreen("img/{}/{}.png".format(self.name, "control_point"), confidence=ACCURACY)
-        pag.moveTo(box)
-        x, y = pag.position()
+    def load_data(self):
+        with open('data/settings.json', 'r') as file:
+            data = json.load(file)[self.name]
 
-        if self.loop_index == TIME_TO_DRAG:
-            self.drag_this_map("forward")
+            self.dragged = data["drag"]
+            self.fleet_pos = data["fleet"]
+            self.stage_road = data["path"]
+            self.abstract_map = data["map"]
+            self.control_point = data["point"]
 
+            CLICK_TIME = data["wait_click"]
+            TIME_FOR_BATTLE = data["wait_battle"]
 
-        if self.loop_index+1 < len(self.stage_road):
-            position = self.stage_road[self.loop_index]
-            if position == (8,2):
-                FREEZE(1)
+    def start(self):
+        for image in START_CHAPTER_TEMPLATE:
+            self.find_and_click(image)
+
+    def move_next(self, position):
+        self.box = None
+        for _ in range(3):
+            self.box = pag.locateOnScreen("img/{}/{}.png".format(self.name, "control"), confidence=ACCURACY)
+            if self.box!=None:
+                pag.moveTo(self.box)
+                x, y = pag.position()
+
+                new_x = (position[0]-self.control_point[0])*MOVE_X
+                new_y = (position[1]-self.control_point[1])*MOVE_Y    
+                pag.moveTo(x+new_x, y+new_y)
+                
                 pag.click()
+                FREEZE(CLICK_TIME)
+                pag.click()
+                FREEZE(CLICK_TIME)
+                break
 
-            self.loop_index+=1            
-            new_x = (position[0]-self.control_point[0])*MOVE_X
-            new_y = (position[1]-self.control_point[1])*MOVE_Y
-            
-            pag.moveTo(x+new_x, y+new_y)
-            pag.click()
-            
+            else:
+                FREEZE(CLICK_TIME)
 
     def run(self):
-        for pos in range(len(self.stage_road)):
-            #drag to another part of map
-            #can be dragged a few times in different sides
-            #also, calculate new mouse position
-            self.compare_to_screen("connection")
-            if self.box!=None:
-                pag.click(self.box)
-                time.sleep(10)
+        for point in self.stage_road:
+            self.move_next(point)
 
-            if pos == TIME_TO_DRAG:
-                self.drag_this_map("forward")
-
-            #save mouse position
-            x, y = pag.position()
-
-            '''
-            self.compare_to_screen("boss")  
-            if self.box!=None:
-                pag.click(self.box)
-                break
-            '''
-            #move mouse according to required point from path
-            point = self.stage_road[pos]
-            if point[0] > self.fleet_pos[0]:
-                pag.moveTo(x+MOVE_X, y)
-            elif point[0] < self.fleet_pos[0]:
-                pag.moveTo(x+MOVE_X*(-1), y)
-            else:
-                pass
-
-            if point[1] > self.fleet_pos[1]:
-                pag.moveTo(x, y+MOVE_Y)
-            elif point[1] < self.fleet_pos[1]:
-                pag.moveTo(x, y+MOVE_Y*(-1))
-            else:
-                pass
-
-            pag.click(None, None)
-            time.sleep(FREEZE_CLICK+5)
-            #if ambush
-            x, y = pag.position()
-            self.check_ambush()
-            pag.moveTo(x, y)
-            #or aviation
-            #also feature for supply items in the map
-            pag.click(None, None)
-            time.sleep(FREEZE_CLICK)
-
-            #try to go to the battle menu
-            pag.click(None, None)
-
-            #save new fleet position and mouse point
-            x, y = pag.position()
-            self.fleet_pos = point
-
-            #wait while map is loading
-            time.sleep(FREEZE_CLICK)
-            self.battle()
-            pag.moveTo(x, y)
-            time.sleep(FREEZE_CLICK)
+            #special gameplay - connection errors, ambush, commisions
+            self.find_and_click("confirm")
+            self.find_and_click("ambush")
+            self.find_and_click("confirm")
             
-    def battle(self):
-        self.compare_to_screen("battle")
-        if self.box!=None:
-            #self.battle_amount+=1
-            pag.click(self.box)
+            if self.find_and_click("boss"):
+                self.boss = True
 
-            pag.moveTo(1230, 650)
-            time.sleep(TIME_FOR_BATTLE)
-            pag.click(None, None)
-            FREEZE(CLICK_TIME)
-            pag.click(None, None)
-            FREEZE(CLICK_TIME)
-            pag.click(None, None)
-            FREEZE(CLICK_TIME)
+            if self.find_and_click("battle"):
+                FREEZE(TIME_FOR_BATTLE)
+                for _ in range(3):
+                    pag.click()
+                    FREEZE(CLICK_TIME)
 
-            self.compare_to_screen("end")
-            if self.box!=None:
-                pag.click(self.box)
+                self.find_and_click("end")
+
+            if self.boss:
+                self.retreat()
+                break
+        self.retreat()
+
+    def retreat(self):
+        self.find_and_click("retreat")
+        self.find_and_click("confirm")
 
 
 class ControlPlay():
@@ -376,72 +291,19 @@ class ControlPlay():
     def __init__(self):
         self.chapter = None 
 
-    def click_on(self, item):
-        if item in SPETIAL_TEMPLATE:
-            box = pag.locateOnScreen("img/{}/{}.png".format(self.chapter.name, item), confidence=ACCURACY)
-        else:
-            box = pag.locateOnScreen("img/{}.png".format(item), confidence=ACCURACY)
-        if box!=None:
-            pag.click(box)
-
-
     def set_chapter(self, chapter):
         self.chapter = chapter
-
-    def start_chapter(self):
-        for item in START_CHAPTER_TEMPLATE:
-            self.click_on(item)
-            FREEZE(CLICK_TIME)
-        FREEZE(CLICK_TIME)
-        box = pag.locateOnScreen("img/{}.png".format("strategy"), confidence=ACCURACY)
-        pag.click(box[0]+5, box[1]+5)
-
-
-        #self.chapter.set_first_mouse_position()
+        self.chapter.load_data()
+        self.chapter.start()
 
     def clear_chapter(self):
-        for i in range(len(self.chapter.stage_road)):
-            self.chapter.move_next()
-            FREEZE(CLICK_TIME)
-
-            x, y = pag.position()
-            self.click_on("ambush")
-            FREEZE(CLICK_TIME)
-            self.click_on("connection")
-            FREEZE(CLICK_TIME)
-
-            pag.moveTo(x, y)
-            self.chapter.battle()
-
-            FREEZE(CLICK_TIME*2)
-
-    def retreat(self):
-        self.click_on("retreat")
-        FREEZE(CLICK_TIME)
-        self.click_on("retreatconfirm")
-        
+        self.chapter.run()
 
 
 
 Play = ControlPlay()
-Play.set_chapter(Chapter81())
-Play.start_chapter()
+chapter = Chapter("8.1")
+
+Play.set_chapter(chapter)
 Play.clear_chapter()
-Play.retreat()
 
-'''
-Chapter = Chapter81()
-
-#go to chapter map
-for el in ACTION_TEMPLATE: 
-    Chapter.find_and_click(el)    
-    time.sleep(FREEZE_CLICK)
-
-#move to the start of chapter
-Chapter.get_first_position()
-
-if Chapter.in_battle():
-    Chapter.run()
-    time.sleep(FREEZE_CLICK)
-    Chapter.retreat()
-'''
