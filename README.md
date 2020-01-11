@@ -3,6 +3,7 @@ Script that helps you to farm ships/exp from non-event chapters in Azur Lane.
 Tech tips:
 
 Make shure you install Python 3.X and ann it to your system path. You can check it in console: python (or python3).
+Also, you need some python modules. Install it using "pip install MODULENAME"
 
 Bot works only on PC with emulators.
 
@@ -18,12 +19,6 @@ Preparation:
 
 2. In game: go to Battle and use arrows "prev"/"next" to select map where present stage for farm.
 
-3. In downloaded folder: go to dist/main and run main.exe.
+3. In downloaded folder: open console and enter "python main.py"
 
-4. Enter chapter name from chapter list and select how many times you want to farm this chapter.
-
-5. Select your emulator and make full screen. After a few seconds after running main.exe you will see how bot select stage and farm it.
-
-6. If nothing: check console that you run before and see what happends.
-
-7. For any questions: rinej.sapset@gmail.com
+Bot do nothing: check your console. Sometimes, you should just download modules. Or, you should make new screenshots of game buttons.
