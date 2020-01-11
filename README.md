@@ -21,4 +21,5 @@ Preparation:
 
 3. In downloaded folder: open console and enter "python main.py"
 
+
 Bot do nothing: check your console. Sometimes, you should just download modules. Or, you should make new screenshots of game buttons.
